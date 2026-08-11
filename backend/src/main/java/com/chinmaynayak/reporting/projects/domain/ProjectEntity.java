@@ -1,6 +1,7 @@
-package com.chinmaynayak.reporting.users.domain;
+package com.chinmaynayak.reporting.projects.domain;
 
 import com.chinmaynayak.reporting.departments.domain.DepartmentEntity;
+import com.chinmaynayak.reporting.users.domain.UserEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,32 +14,36 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "users")
-public class UserEntity {
+@Table(name = "projects")
+public class ProjectEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "full_name", nullable = false, length = 160)
-	private String fullName;
-
-	@Column(nullable = false, length = 254)
-	private String email;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 40)
-	private UserRole role;
-
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 30)
-	private UserStatus status;
+	@Column(nullable = false, length = 160)
+	private String name;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "department_id", nullable = false)
 	private DepartmentEntity department;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "owner_user_id", nullable = false)
+	private UserEntity owner;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 30)
+	private ProjectStatus status;
+
+	@Column(name = "start_date", nullable = false)
+	private LocalDate startDate;
+
+	@Column(name = "end_date")
+	private LocalDate endDate;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -46,31 +51,35 @@ public class UserEntity {
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
 
-	protected UserEntity() {
+	protected ProjectEntity() {
 	}
 
 	public Long getId() {
 		return id;
 	}
 
-	public String getFullName() {
-		return fullName;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public UserRole getRole() {
-		return role;
-	}
-
-	public UserStatus getStatus() {
-		return status;
+	public String getName() {
+		return name;
 	}
 
 	public DepartmentEntity getDepartment() {
 		return department;
+	}
+
+	public UserEntity getOwner() {
+		return owner;
+	}
+
+	public ProjectStatus getStatus() {
+		return status;
+	}
+
+	public LocalDate getStartDate() {
+		return startDate;
+	}
+
+	public LocalDate getEndDate() {
+		return endDate;
 	}
 
 	public Instant getCreatedAt() {
