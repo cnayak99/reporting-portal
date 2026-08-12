@@ -63,7 +63,8 @@ const columnHeaders: Array<{
 
 export function UserReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = searchParams.get("q")?.trim() ?? "";
+  const queryInput = searchParams.get("q") ?? "";
+  const query = queryInput.trim();
   const role = parseRole(searchParams.get("role"));
   const status = parseStatus(searchParams.get("status"));
   const page = parsePositiveInteger(searchParams.get("page"), 0);
@@ -182,9 +183,9 @@ export function UserReportPage() {
             <input
               id="users-search"
               type="search"
-              value={query}
+              value={queryInput}
               onChange={(event) =>
-                updateParams({ q: event.target.value.trim() || undefined })
+                updateParams({ q: toOptionalInputValue(event.target.value) })
               }
               placeholder="Name or email"
             />
@@ -366,6 +367,10 @@ function parsePageSize(value: string | null) {
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function toOptionalInputValue(value: string) {
+  return value === "" ? undefined : value;
 }
 
 function parseSort(value: string | null): SortState {

@@ -222,6 +222,26 @@ describe("AppShell", () => {
     expect(getFetchSearchParam(fetchMock, 1, "page")).toBe("0");
   });
 
+  it("allows spaces while typing a users search phrase", async () => {
+    const fetchMock = mockUsersResponse(usersPage());
+    renderApp(["/reports/users"]);
+    await screen.findByText("Avery Chen");
+
+    const searchInput = screen.getByLabelText("Search users");
+    fireEvent.change(searchInput, { target: { value: "Ben" } });
+    expect(searchInput).toHaveValue("Ben");
+
+    fireEvent.change(searchInput, { target: { value: "Ben " } });
+    expect(searchInput).toHaveValue("Ben ");
+
+    fireEvent.change(searchInput, { target: { value: "Ben Foster" } });
+    expect(searchInput).toHaveValue("Ben Foster");
+
+    await waitFor(() =>
+      expect(getLatestFetchSearchParam(fetchMock, "q")).toBe("Ben Foster")
+    );
+  });
+
   it("sends the selected role filter and resets to page zero", async () => {
     const fetchMock = mockUsersResponse(usersPage());
     renderApp(["/reports/users?page=3"]);
@@ -802,6 +822,20 @@ function getFetchSearchParam(
 ) {
   const path = String(fetchMock.mock.calls[callIndex][0]);
   return new URL(path, "http://localhost").searchParams.get(parameter);
+}
+
+function getLatestFetchSearchParam(
+  fetchMock: ReturnType<typeof vi.fn>,
+  parameter: string
+) {
+  const latestCall = fetchMock.mock.calls.at(-1);
+  if (!latestCall) {
+    return null;
+  }
+
+  return new URL(String(latestCall[0]), "http://localhost").searchParams.get(
+    parameter
+  );
 }
 
 function getFetchSearchParamForPath(

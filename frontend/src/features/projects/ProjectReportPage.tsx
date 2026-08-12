@@ -62,7 +62,8 @@ const columnHeaders: Array<{
 
 export function ProjectReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = searchParams.get("q")?.trim() ?? "";
+  const queryInput = searchParams.get("q") ?? "";
+  const query = queryInput.trim();
   const status = parseStatus(searchParams.get("status"));
   const departmentId = parseDepartmentId(searchParams.get("departmentId"));
   const page = parsePositiveInteger(searchParams.get("page"), 0);
@@ -227,9 +228,9 @@ export function ProjectReportPage() {
             <input
               id="projects-search"
               type="search"
-              value={query}
+              value={queryInput}
               onChange={(event) =>
-                updateParams({ q: event.target.value.trim() || undefined })
+                updateParams({ q: toOptionalInputValue(event.target.value) })
               }
               placeholder="Project name"
             />
@@ -450,6 +451,10 @@ function parsePageSize(value: string | null) {
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function toOptionalInputValue(value: string) {
+  return value === "" ? undefined : value;
 }
 
 function parseSort(value: string | null): SortState {

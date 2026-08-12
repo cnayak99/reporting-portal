@@ -43,8 +43,10 @@ const columnHeaders: Array<{
 
 export function DepartmentReportPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = searchParams.get("q")?.trim() ?? "";
-  const location = searchParams.get("location")?.trim() ?? "";
+  const queryInput = searchParams.get("q") ?? "";
+  const locationInput = searchParams.get("location") ?? "";
+  const query = queryInput.trim();
+  const location = locationInput.trim();
   const page = parsePositiveInteger(searchParams.get("page"), 0);
   const size = parsePageSize(searchParams.get("size"));
   const sort = parseSort(searchParams.get("sort"));
@@ -168,9 +170,9 @@ export function DepartmentReportPage() {
             <input
               id="departments-search"
               type="search"
-              value={query}
+              value={queryInput}
               onChange={(event) =>
-                updateParams({ q: event.target.value.trim() || undefined })
+                updateParams({ q: toOptionalInputValue(event.target.value) })
               }
               placeholder="Department name"
             />
@@ -181,10 +183,10 @@ export function DepartmentReportPage() {
             <input
               id="departments-location"
               type="search"
-              value={location}
+              value={locationInput}
               onChange={(event) =>
                 updateParams({
-                  location: event.target.value.trim() || undefined
+                  location: toOptionalInputValue(event.target.value)
                 })
               }
               placeholder="City, state, or region"
@@ -330,6 +332,10 @@ function parsePageSize(value: string | null) {
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function toOptionalInputValue(value: string) {
+  return value === "" ? undefined : value;
 }
 
 function parseSort(value: string | null): SortState {
