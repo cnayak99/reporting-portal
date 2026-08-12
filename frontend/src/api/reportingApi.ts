@@ -18,6 +18,14 @@ export interface UsersReportParams {
   sort?: string;
 }
 
+export interface DepartmentsReportParams {
+  q?: string;
+  location?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
 export function getReportCatalog(signal?: AbortSignal) {
   return requestJson<ReportMetadata[]>("/api/reports", { signal });
 }
@@ -32,9 +40,12 @@ export function getUsersReport(
   );
 }
 
-export function getDepartmentsReport(signal?: AbortSignal) {
+export function getDepartmentsReport(
+  params: DepartmentsReportParams = {},
+  signal?: AbortSignal
+) {
   return requestJson<PagedResponse<DepartmentReportRow>>(
-    "/api/reports/departments",
+    withSearchParams("/api/reports/departments", params),
     { signal }
   );
 }

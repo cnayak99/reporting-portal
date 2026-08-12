@@ -1,6 +1,6 @@
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronsUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { getUsersReport } from "../../api/reportingApi";
 import type {
   PagedResponse,
@@ -8,6 +8,9 @@ import type {
   UserRole,
   UserStatus
 } from "../../api/types";
+import { PaginationControls } from "../../components/PaginationControls";
+import { EmptyState, ErrorState, LoadingState } from "../../components/ReportStates";
+import { ReportPageHeader } from "../../components/ReportPageHeader";
 
 const userRoles: UserRole[] = [
   "ADMIN",
@@ -152,20 +155,11 @@ export function UserReportPage() {
 
   return (
     <div className="page-stack">
-      <section className="report-page-header">
-        <Link className="back-link" to="/">
-          <ArrowLeft size={18} aria-hidden="true" />
-          Back to Reports
-        </Link>
-        <div>
-          <span className="section-kicker">Users report</span>
-          <h1>Users</h1>
-          <p>
-            Search and review user identity, role, status, and creation date
-            from the backend report endpoint.
-          </p>
-        </div>
-      </section>
+      <ReportPageHeader
+        kicker="Users report"
+        title="Users"
+        description="Search and review user identity, role, status, and creation date from the backend report endpoint."
+      />
 
       <section className="report-workbench" aria-labelledby="users-table-title">
         <div className="section-heading">
@@ -256,21 +250,15 @@ export function UserReportPage() {
         </form>
 
         {state.status === "loading" ? (
-          <div className="loading-panel" role="status">
-            Loading users
-          </div>
+          <LoadingState label="Loading users" />
         ) : null}
 
         {state.status === "error" ? (
-          <div className="inline-alert" role="status">
-            <span>{state.error}</span>
-          </div>
+          <ErrorState message={state.error} />
         ) : null}
 
         {state.status === "success" && rows.length === 0 ? (
-          <div className="empty-panel" role="status">
-            No users match this report view.
-          </div>
+          <EmptyState message="No users match this report view." />
         ) : null}
 
         {state.status === "success" && rows.length > 0 ? (
@@ -337,30 +325,13 @@ export function UserReportPage() {
             </div>
 
             {pagination ? (
-              <div className="pagination-bar">
-                <span>
-                  Page {pagination.page + 1} of{" "}
-                  {Math.max(pagination.totalPages, 1)}
-                </span>
-                <div className="pagination-actions">
-                  <button
-                    className="button button-secondary"
-                    type="button"
-                    disabled={!pagination.hasPrevious}
-                    onClick={() => updateParams({ page: pagination.page - 1 }, false)}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    className="button button-secondary"
-                    type="button"
-                    disabled={!pagination.hasNext}
-                    onClick={() => updateParams({ page: pagination.page + 1 }, false)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
+              <PaginationControls
+                pagination={pagination}
+                onPrevious={() =>
+                  updateParams({ page: pagination.page - 1 }, false)
+                }
+                onNext={() => updateParams({ page: pagination.page + 1 }, false)}
+              />
             ) : null}
           </>
         ) : null}

@@ -1,8 +1,15 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./AppShell";
 import type {
+  DepartmentReportRow,
   PagedResponse,
   ReportMetadata,
   UserReportRow
@@ -284,6 +291,149 @@ describe("AppShell", () => {
       await screen.findByRole("heading", { name: "Available reports" })
     ).toBeInTheDocument();
   });
+
+  it("renders departments report rows from the backend", async () => {
+    const fetchMock = mockDepartmentsResponse(departmentsPage());
+    renderApp(["/reports/departments"]);
+
+    expect(await screen.findByText("Engineering")).toBeInTheDocument();
+    expect(screen.getByText("Avery Chen")).toBeInTheDocument();
+    expect(screen.getByText("2 total results")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
+    expect(getFetchSearchParam(fetchMock, 0, "sort")).toBe("name,asc");
+  });
+
+  it("renders departments with zero employees normally", async () => {
+    mockDepartmentsResponse(departmentsPage());
+    renderApp(["/reports/departments"]);
+
+    await screen.findByText("Operations");
+    expect(screen.getByText("0")).toBeInTheDocument();
+  });
+
+  it("renders null department managers clearly", async () => {
+    mockDepartmentsResponse(departmentsPage());
+    renderApp(["/reports/departments"]);
+
+    expect(await screen.findByText("Unassigned")).toBeInTheDocument();
+  });
+
+  it("sends q and resets departments to page zero when searching", async () => {
+    const fetchMock = mockDepartmentsResponse(departmentsPage());
+    renderApp(["/reports/departments?page=2"]);
+    await screen.findByText("Engineering");
+
+    fireEvent.change(screen.getByLabelText("Search departments"), {
+      target: { value: " engineering " }
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(getFetchSearchParam(fetchMock, 1, "q")).toBe("engineering");
+    expect(getFetchSearchParam(fetchMock, 1, "page")).toBe("0");
+  });
+
+  it("sends location and resets departments to page zero when filtering", async () => {
+    const fetchMock = mockDepartmentsResponse(departmentsPage());
+    renderApp(["/reports/departments?page=3"]);
+    await screen.findByText("Engineering");
+
+    fireEvent.change(screen.getByLabelText("Location"), {
+      target: { value: " Chicago " }
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(getFetchSearchParam(fetchMock, 1, "location")).toBe("Chicago");
+    expect(getFetchSearchParam(fetchMock, 1, "page")).toBe("0");
+  });
+
+  it("uses backend pagination metadata for departments", async () => {
+    const fetchMock = mockDepartmentsResponse(
+      departmentsPage(sampleDepartments, {
+        page: 0,
+        size: 25,
+        totalItems: 28,
+        totalPages: 2,
+        hasNext: true,
+        hasPrevious: false
+      })
+    );
+    renderApp(["/reports/departments"]);
+    await screen.findByText("Engineering");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(getFetchSearchParam(fetchMock, 1, "page")).toBe("1");
+  });
+
+  it("exposes only backend-supported department sorting", async () => {
+    const fetchMock = mockDepartmentsResponse(departmentsPage());
+    renderApp(["/reports/departments?sort=employeeCount,desc"]);
+    await screen.findByText("Engineering");
+
+    expect(getFetchSearchParam(fetchMock, 0, "sort")).toBe("name,asc");
+    expect(
+      screen.getByRole("columnheader", { name: /Department Name/ })
+    ).toHaveAttribute("aria-sort", "ascending");
+    expect(
+      screen.queryByRole("button", { name: /Employee Count/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Manager/ })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Location/ }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(getFetchSearchParam(fetchMock, 1, "sort")).toBe("location,asc");
+  });
+
+  it("shows a departments error state with retry", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(problemResponse("Departments report unavailable."))
+      .mockResolvedValueOnce(jsonResponse(departmentsPage()));
+    vi.stubGlobal("fetch", fetchMock);
+    renderApp(["/reports/departments"]);
+
+    expect(
+      await screen.findByText("Departments report unavailable.")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText("Engineering")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows a departments empty state", async () => {
+    mockDepartmentsResponse(departmentsPage([]));
+    renderApp(["/reports/departments"]);
+
+    expect(
+      await screen.findByText("No departments match this report view.")
+    ).toBeInTheDocument();
+  });
+
+  it("navigates back from departments to the report catalog", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.startsWith("/api/reports/departments")) {
+          return Promise.resolve(jsonResponse(departmentsPage()));
+        }
+        return Promise.resolve(jsonResponse(catalogReports));
+      })
+    );
+    renderApp(["/reports/departments"]);
+    await screen.findByText("Engineering");
+
+    fireEvent.click(screen.getByRole("link", { name: "Back to Reports" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Available reports" })
+    ).toBeInTheDocument();
+  });
 });
 
 const sampleUsers: UserReportRow[] = [
@@ -302,6 +452,23 @@ const sampleUsers: UserReportRow[] = [
     role: "ANALYST",
     status: "ON_LEAVE",
     createdAt: "2026-02-20T18:45:00Z"
+  }
+];
+
+const sampleDepartments: DepartmentReportRow[] = [
+  {
+    id: 201,
+    name: "Engineering",
+    manager: "Avery Chen",
+    employeeCount: 36,
+    location: "Chicago, IL"
+  },
+  {
+    id: 202,
+    name: "Operations",
+    manager: null,
+    employeeCount: 0,
+    location: "Remote"
   }
 ];
 
@@ -335,6 +502,12 @@ function mockUsersFailure(detail: string) {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(problemResponse(detail)));
 }
 
+function mockDepartmentsResponse(page: PagedResponse<DepartmentReportRow>) {
+  const fetchMock = vi.fn().mockResolvedValue(jsonResponse(page));
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
 function usersPage(
   items: UserReportRow[] = sampleUsers,
   pagination = {
@@ -346,6 +519,20 @@ function usersPage(
     hasPrevious: false
   }
 ): PagedResponse<UserReportRow> {
+  return { items, pagination };
+}
+
+function departmentsPage(
+  items: DepartmentReportRow[] = sampleDepartments,
+  pagination = {
+    page: 0,
+    size: 25,
+    totalItems: items.length,
+    totalPages: items.length === 0 ? 0 : 1,
+    hasNext: false,
+    hasPrevious: false
+  }
+): PagedResponse<DepartmentReportRow> {
   return { items, pagination };
 }
 
