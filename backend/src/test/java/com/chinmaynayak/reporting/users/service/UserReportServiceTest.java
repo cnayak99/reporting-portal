@@ -3,6 +3,8 @@ package com.chinmaynayak.reporting.users.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.chinmaynayak.reporting.common.error.ErrorCode;
+import com.chinmaynayak.reporting.common.error.InvalidReportQueryException;
 import com.chinmaynayak.reporting.common.web.PageMetadata;
 import com.chinmaynayak.reporting.common.web.PagedResponse;
 import com.chinmaynayak.reporting.users.domain.UserRole;
@@ -139,8 +141,10 @@ class UserReportServiceTest {
 		UserReportQuery query = query(-1, null, null, null, null, null);
 
 		assertThatThrownBy(() -> userReportService.getUsersReport(query))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("page must be greater than or equal to 0");
+				.isInstanceOfSatisfying(InvalidReportQueryException.class, exception -> {
+					assertThat(exception.getCode()).isEqualTo(ErrorCode.INVALID_PAGE);
+					assertThat(exception).hasMessage("page must be greater than or equal to 0");
+				});
 	}
 
 	@Test
@@ -149,11 +153,15 @@ class UserReportServiceTest {
 		UserReportQuery tooLarge = query(null, 101, null, null, null, null);
 
 		assertThatThrownBy(() -> userReportService.getUsersReport(tooSmall))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("size must be between 1 and 100");
+				.isInstanceOfSatisfying(InvalidReportQueryException.class, exception -> {
+					assertThat(exception.getCode()).isEqualTo(ErrorCode.INVALID_PAGE_SIZE);
+					assertThat(exception).hasMessage("size must be between 1 and 100");
+				});
 		assertThatThrownBy(() -> userReportService.getUsersReport(tooLarge))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("size must be between 1 and 100");
+				.isInstanceOfSatisfying(InvalidReportQueryException.class, exception -> {
+					assertThat(exception.getCode()).isEqualTo(ErrorCode.INVALID_PAGE_SIZE);
+					assertThat(exception).hasMessage("size must be between 1 and 100");
+				});
 	}
 
 	@Test
@@ -161,8 +169,10 @@ class UserReportServiceTest {
 		UserReportQuery query = query(null, null, "department,asc", null, null, null);
 
 		assertThatThrownBy(() -> userReportService.getUsersReport(query))
-				.isInstanceOf(IllegalArgumentException.class)
-				.hasMessage("unsupported sort field: department");
+				.isInstanceOfSatisfying(InvalidReportQueryException.class, exception -> {
+					assertThat(exception.getCode()).isEqualTo(ErrorCode.INVALID_SORT);
+					assertThat(exception).hasMessage("unsupported sort field: department");
+				});
 	}
 
 	private void insertEngineeringDepartment() {

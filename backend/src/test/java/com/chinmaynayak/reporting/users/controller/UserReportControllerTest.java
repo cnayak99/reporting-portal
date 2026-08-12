@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.chinmaynayak.reporting.common.error.ErrorCode;
+import com.chinmaynayak.reporting.common.error.InvalidReportQueryException;
 import com.chinmaynayak.reporting.common.web.PageMetadata;
 import com.chinmaynayak.reporting.common.web.PagedResponse;
 import com.chinmaynayak.reporting.users.domain.UserRole;
@@ -87,12 +89,86 @@ class UserReportControllerTest {
 	@Test
 	void invalidEnumValuesReturnBadRequest() throws Exception {
 		mockMvc.perform(get("/api/reports/users").param("role", "LEAD"))
-				.andExpect(status().isBadRequest());
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Invalid request parameter"))
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.detail").value("Invalid value for parameter 'role'."))
+				.andExpect(jsonPath("$.code").value("INVALID_PARAMETER"))
+				.andExpect(jsonPath("$.parameter").value("role"));
 
 		mockMvc.perform(get("/api/reports/users").param("status", "PENDING"))
-				.andExpect(status().isBadRequest());
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Invalid request parameter"))
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.detail").value("Invalid value for parameter 'status'."))
+				.andExpect(jsonPath("$.code").value("INVALID_PARAMETER"))
+				.andExpect(jsonPath("$.parameter").value("status"));
 
 		verifyNoInteractions(userReportService);
+	}
+
+	@Test
+	void invalidPageReturnsProblemDetail() throws Exception {
+		UserReportQuery query = new UserReportQuery(-1, null, null, null, null, null);
+		when(userReportService.getUsersReport(query))
+				.thenThrow(new InvalidReportQueryException(
+						ErrorCode.INVALID_PAGE,
+						"page must be greater than or equal to 0"));
+
+		mockMvc.perform(get("/api/reports/users").param("page", "-1"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Invalid report query"))
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.detail").value("page must be greater than or equal to 0"))
+				.andExpect(jsonPath("$.code").value("INVALID_PAGE"));
+	}
+
+	@Test
+	void invalidSizeReturnsProblemDetail() throws Exception {
+		UserReportQuery query = new UserReportQuery(null, 500, null, null, null, null);
+		when(userReportService.getUsersReport(query))
+				.thenThrow(new InvalidReportQueryException(
+						ErrorCode.INVALID_PAGE_SIZE,
+						"size must be between 1 and 100"));
+
+		mockMvc.perform(get("/api/reports/users").param("size", "500"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Invalid report query"))
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.detail").value("size must be between 1 and 100"))
+				.andExpect(jsonPath("$.code").value("INVALID_PAGE_SIZE"));
+	}
+
+	@Test
+	void unsupportedSortFieldReturnsProblemDetail() throws Exception {
+		UserReportQuery query = new UserReportQuery(null, null, "password,asc", null, null, null);
+		when(userReportService.getUsersReport(query))
+				.thenThrow(new InvalidReportQueryException(
+						ErrorCode.INVALID_SORT,
+						"unsupported sort field: password"));
+
+		mockMvc.perform(get("/api/reports/users").param("sort", "password,asc"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Invalid report query"))
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.detail").value("unsupported sort field: password"))
+				.andExpect(jsonPath("$.code").value("INVALID_SORT"));
+	}
+
+	@Test
+	void invalidSortDirectionReturnsProblemDetail() throws Exception {
+		UserReportQuery query = new UserReportQuery(null, null, "name,sideways", null, null, null);
+		when(userReportService.getUsersReport(query))
+				.thenThrow(new InvalidReportQueryException(
+						ErrorCode.INVALID_SORT,
+						"sort direction must be asc or desc"));
+
+		mockMvc.perform(get("/api/reports/users").param("sort", "name,sideways"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Invalid report query"))
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.detail").value("sort direction must be asc or desc"))
+				.andExpect(jsonPath("$.code").value("INVALID_SORT"));
 	}
 
 	@Test

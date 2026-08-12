@@ -1,5 +1,7 @@
 package com.chinmaynayak.reporting.users.service;
 
+import com.chinmaynayak.reporting.common.error.ErrorCode;
+import com.chinmaynayak.reporting.common.error.InvalidReportQueryException;
 import com.chinmaynayak.reporting.common.web.PageMetadata;
 import com.chinmaynayak.reporting.common.web.PagedResponse;
 import com.chinmaynayak.reporting.users.domain.UserEntity;
@@ -62,11 +64,11 @@ public class UserReportService {
 		int size = query.size() == null ? DEFAULT_SIZE : query.size();
 
 		if (page < 0) {
-			throw new IllegalArgumentException("page must be greater than or equal to 0");
+			throw new InvalidReportQueryException(ErrorCode.INVALID_PAGE, "page must be greater than or equal to 0");
 		}
 
 		if (size < 1 || size > MAX_SIZE) {
-			throw new IllegalArgumentException("size must be between 1 and 100");
+			throw new InvalidReportQueryException(ErrorCode.INVALID_PAGE_SIZE, "size must be between 1 and 100");
 		}
 
 		return PageRequest.of(page, size, buildSort(query.sort()));
@@ -77,7 +79,7 @@ public class UserReportService {
 		String[] parts = sortValue.split(",", -1);
 
 		if (parts.length != 2) {
-			throw new IllegalArgumentException("sort must use the format field,direction");
+			throw new InvalidReportQueryException(ErrorCode.INVALID_SORT, "sort must use the format field,direction");
 		}
 
 		String apiField = parts[0].trim();
@@ -85,7 +87,7 @@ public class UserReportService {
 		String entityField = SORT_FIELDS.get(apiField);
 
 		if (entityField == null) {
-			throw new IllegalArgumentException("unsupported sort field: " + apiField);
+			throw new InvalidReportQueryException(ErrorCode.INVALID_SORT, "unsupported sort field: " + apiField);
 		}
 
 		Sort.Direction direction = parseDirection(directionValue);
@@ -115,7 +117,7 @@ public class UserReportService {
 			return Sort.Direction.DESC;
 		}
 
-		throw new IllegalArgumentException("sort direction must be asc or desc");
+		throw new InvalidReportQueryException(ErrorCode.INVALID_SORT, "sort direction must be asc or desc");
 	}
 
 	private static String normalizeSearch(String q) {
