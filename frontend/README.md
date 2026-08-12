@@ -4,9 +4,11 @@ React + TypeScript frontend for the Enfos reporting portal assessment.
 
 ## Current phase
 
-Phase 1 uses a local preview data source so the UI can be reviewed before the
-Spring Boot report APIs are complete. The data source is isolated in
-`src/services/reportDataSource.ts`; later it can be replaced with real calls to:
+Phase 1 provides the React application shell, typed API client, report metadata
+catalog route, report route placeholders, and test/build setup.
+
+Browser API requests use relative `/api` URLs. During local development, Vite
+proxies those requests to the Spring Boot backend at `http://localhost:8080`.
 
 - `GET /api/reports`
 - `GET /api/reports/users`
@@ -29,3 +31,8 @@ The app starts on Vite's local development server, usually
 npm run build
 ```
 
+## Test
+
+```bash
+npm test
+```
