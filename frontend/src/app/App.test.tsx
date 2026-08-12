@@ -184,6 +184,21 @@ describe("AppShell", () => {
     expect(await screen.findByText("Users report unavailable.")).toBeInTheDocument();
   });
 
+  it("retries the users report after an error", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(problemResponse("Users report unavailable."))
+      .mockResolvedValueOnce(jsonResponse(usersPage()));
+    vi.stubGlobal("fetch", fetchMock);
+    renderApp(["/reports/users"]);
+
+    expect(await screen.findByText("Users report unavailable.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText("Avery Chen")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("shows a users empty state", async () => {
     mockUsersResponse(usersPage([]));
     renderApp(["/reports/users"]);

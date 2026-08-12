@@ -69,6 +69,7 @@ export function UserReportPage() {
   const page = parsePositiveInteger(searchParams.get("page"), 0);
   const size = parsePageSize(searchParams.get("size"));
   const sort = parseSort(searchParams.get("sort"));
+  const [reloadToken, setReloadToken] = useState(0);
   const [state, setState] = useState<UsersState>({ status: "loading" });
 
   const requestParams = useMemo(
@@ -110,7 +111,7 @@ export function UserReportPage() {
     void loadUsers();
 
     return () => controller.abort();
-  }, [requestParams]);
+  }, [reloadToken, requestParams]);
 
   const rows = state.status === "success" ? state.data.items : [];
   const pagination =
@@ -254,7 +255,10 @@ export function UserReportPage() {
         ) : null}
 
         {state.status === "error" ? (
-          <ErrorState message={state.error} />
+          <ErrorState
+            message={state.error}
+            onRetry={() => setReloadToken((current) => current + 1)}
+          />
         ) : null}
 
         {state.status === "success" && rows.length === 0 ? (
