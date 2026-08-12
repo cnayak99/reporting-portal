@@ -1,48 +1,26 @@
-import { AlertTriangle, ArrowRight, Database, Search } from "lucide-react";
+import { AlertTriangle, ArrowRight, Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getReportCatalog } from "../../api/reportingApi";
 import type { ReportMetadata } from "../../api/types";
 
-const fallbackReports: ReportMetadata[] = [
-  {
-    id: "users",
-    name: "Users",
-    description: "People in the system with role, status, email, and creation date.",
-    endpoint: "/api/reports/users"
-  },
-  {
-    id: "departments",
-    name: "Departments",
-    description: "Org structure with manager, employee count, and location.",
-    endpoint: "/api/reports/departments"
-  },
-  {
-    id: "projects",
-    name: "Projects",
-    description: "Active and past work by department, owner, status, and dates.",
-    endpoint: "/api/reports/projects"
-  }
-];
-
 type CatalogState =
-  | { status: "loading"; reports: ReportMetadata[]; error?: undefined }
+  | { status: "loading"; reports?: undefined; error?: undefined }
   | { status: "success"; reports: ReportMetadata[]; error?: undefined }
-  | { status: "error"; reports: ReportMetadata[]; error: string };
+  | { status: "error"; reports?: undefined; error: string };
 
 export function CatalogPage() {
   const [query, setQuery] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [state, setState] = useState<CatalogState>({
-    status: "loading",
-    reports: fallbackReports
+    status: "loading"
   });
 
   useEffect(() => {
     const controller = new AbortController();
 
     async function loadReports() {
-      setState((current) => ({ status: "loading", reports: current.reports }));
+      setState({ status: "loading" });
 
       try {
         const reports = await getReportCatalog(controller.signal);
@@ -54,7 +32,6 @@ export function CatalogPage() {
 
         setState({
           status: "error",
-          reports: fallbackReports,
           error:
             error instanceof Error
               ? error.message
@@ -69,6 +46,10 @@ export function CatalogPage() {
   }, [reloadToken]);
 
   const visibleReports = useMemo(() => {
+    if (state.status !== "success") {
+      return [];
+    }
+
     const normalizedQuery = query.trim().toLowerCase();
 
     if (!normalizedQuery) {
@@ -76,12 +57,12 @@ export function CatalogPage() {
     }
 
     return state.reports.filter((report) =>
-      [report.name, report.description, report.endpoint]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery)
+      report.name.toLowerCase().includes(normalizedQuery)
     );
-  }, [query, state.reports]);
+  }, [query, state]);
+
+  const hasReports = state.status === "success" && state.reports.length > 0;
+  const hasNoMatches = hasReports && visibleReports.length === 0;
 
   return (
     <div className="page-stack">
@@ -90,20 +71,9 @@ export function CatalogPage() {
           <span className="section-kicker">Reporting Portal</span>
           <h1>Operational reports, ready for decision work.</h1>
           <p>
-            A focused React shell for browsing report metadata now, with typed
-            API integration ready for report tables in the next phase.
+            Browse the live reporting catalog, find the report you need, and
+            open the route prepared for the table experience.
           </p>
-        </div>
-
-        <div className="hero-metrics" aria-label="Catalog summary">
-          <div>
-            <Database size={19} aria-hidden="true" />
-            <span>{state.reports.length} reports</span>
-          </div>
-          <div>
-            <span>API base</span>
-            <strong>/api</strong>
-          </div>
         </div>
       </section>
 
@@ -116,7 +86,7 @@ export function CatalogPage() {
 
           <label className="search-field">
             <Search size={18} aria-hidden="true" />
-            <span className="sr-only">Search reports</span>
+            <span className="sr-only">Search reports by name</span>
             <input
               type="search"
               placeholder="Search reports"
@@ -125,6 +95,13 @@ export function CatalogPage() {
             />
           </label>
         </div>
+
+        {state.status === "loading" ? (
+          <div className="loading-panel" role="status">
+            <Loader2 size={20} aria-hidden="true" />
+            <span>Loading reports</span>
+          </div>
+        ) : null}
 
         {state.status === "error" ? (
           <div className="inline-alert" role="status">
@@ -140,27 +117,38 @@ export function CatalogPage() {
           </div>
         ) : null}
 
-        <div className="report-grid">
-          {visibleReports.map((report) => (
-            <article className="report-card" key={report.id}>
-              <span className="report-card-eyebrow">{report.endpoint}</span>
-              <h3>{report.name}</h3>
-              <p>{report.description}</p>
-              <Link className="button button-primary" to={`/reports/${report.id}`}>
-                Open route
-                <ArrowRight size={17} aria-hidden="true" />
-              </Link>
-            </article>
-          ))}
-        </div>
-
-        {visibleReports.length === 0 ? (
+        {state.status === "success" && state.reports.length === 0 ? (
           <div className="empty-panel" role="status">
-            No reports match that search.
+            No reports are available yet.
+          </div>
+        ) : null}
+
+        {hasNoMatches ? (
+          <div className="empty-panel" role="status">
+            No reports match "{query.trim()}".
+          </div>
+        ) : null}
+
+        {visibleReports.length > 0 ? (
+          <div className="report-grid">
+            {visibleReports.map((report) => (
+              <article className="report-card" key={report.id}>
+                <span className="report-card-eyebrow">{report.endpoint}</span>
+                <h3>{report.name}</h3>
+                <p>{report.description}</p>
+                <Link
+                  className="button button-primary"
+                  to={`/reports/${report.id}`}
+                  aria-label={`Open ${report.name} report`}
+                >
+                  Open report
+                  <ArrowRight size={17} aria-hidden="true" />
+                </Link>
+              </article>
+            ))}
           </div>
         ) : null}
       </section>
     </div>
   );
 }
-
