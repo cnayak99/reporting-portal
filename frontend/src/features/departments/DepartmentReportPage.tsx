@@ -189,7 +189,7 @@ export function DepartmentReportPage() {
                   location: toOptionalInputValue(event.target.value)
                 })
               }
-              placeholder="City, state, or region"
+              placeholder="City or state"
             />
           </div>
 

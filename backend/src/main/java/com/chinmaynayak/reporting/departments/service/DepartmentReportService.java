@@ -39,11 +39,11 @@ public class DepartmentReportService {
 		DepartmentReportQuery safeQuery = query == null ? DepartmentReportQuery.defaults() : query;
 		Pageable pageable = buildPageable(safeQuery);
 		String searchPattern = toSearchPattern(normalizeText(safeQuery.q()));
-		String locationFilter = normalizeLocation(safeQuery.location());
+		String locationPattern = toSearchPattern(normalizeText(safeQuery.location()));
 
 		Page<DepartmentReportRow> departments = departmentRepository.searchReport(
 				searchPattern,
-				locationFilter,
+				locationPattern,
 				pageable);
 
 		return new PagedResponse<>(departments.getContent(), toMetadata(departments));
@@ -124,15 +124,6 @@ public class DepartmentReportService {
 		}
 
 		return "%" + normalizedSearch.toLowerCase(Locale.ROOT) + "%";
-	}
-
-	private static String normalizeLocation(String location) {
-		String normalizedLocation = normalizeText(location);
-		if (normalizedLocation == null) {
-			return null;
-		}
-
-		return normalizedLocation.toLowerCase(Locale.ROOT);
 	}
 
 	private static PageMetadata toMetadata(Page<DepartmentReportRow> page) {

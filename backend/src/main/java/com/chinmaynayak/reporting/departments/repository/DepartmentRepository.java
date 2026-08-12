@@ -22,17 +22,17 @@ public interface DepartmentRepository extends JpaRepository<DepartmentEntity, Lo
 			LEFT JOIN d.manager manager
 			LEFT JOIN UserEntity employee ON employee.department = d
 			WHERE (:searchPattern IS NULL OR lower(d.name) LIKE :searchPattern)
-			  AND (:locationFilter IS NULL OR lower(d.location) = :locationFilter)
+			  AND (:locationPattern IS NULL OR lower(d.location) LIKE :locationPattern)
 			GROUP BY d.id, d.name, manager.fullName, d.location
 			""",
 			countQuery = """
 					SELECT COUNT(d)
 					FROM DepartmentEntity d
 					WHERE (:searchPattern IS NULL OR lower(d.name) LIKE :searchPattern)
-					  AND (:locationFilter IS NULL OR lower(d.location) = :locationFilter)
+					  AND (:locationPattern IS NULL OR lower(d.location) LIKE :locationPattern)
 					""")
 	Page<DepartmentReportRow> searchReport(
 			@Param("searchPattern") String searchPattern,
-			@Param("locationFilter") String locationFilter,
+			@Param("locationPattern") String locationPattern,
 			Pageable pageable);
 }

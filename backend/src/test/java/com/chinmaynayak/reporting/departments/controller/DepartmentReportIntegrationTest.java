@@ -42,6 +42,7 @@ class DepartmentReportIntegrationTest {
 		deleteExistingData();
 		insertDepartment(100L, "Engineering", "Toronto");
 		insertDepartment(101L, "Support", "Toronto");
+		insertDepartment(102L, "Product", "Durham, NC");
 		insertUser(200L, "Alice Chen", "alice.chen@example.com", "MANAGER", "ACTIVE", 100L);
 		insertUser(201L, "Bob Stone", "bob.stone@example.com", "ENGINEER", "ACTIVE", 100L);
 		updateManager(100L, 200L);
@@ -69,6 +70,27 @@ class DepartmentReportIntegrationTest {
 				.andExpect(jsonPath("$.pagination.totalPages").value(1))
 				.andExpect(jsonPath("$.pagination.hasNext").value(false))
 				.andExpect(jsonPath("$.pagination.hasPrevious").value(false));
+	}
+
+	@Test
+	void departmentsReportLocationFilterMatchesCityOrStateFragments() throws Exception {
+		mockMvc.perform(get("/api/reports/departments")
+						.param("location", "durham")
+						.param("sort", "name,asc"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.items.length()").value(1))
+				.andExpect(jsonPath("$.items[0].name").value("Product"))
+				.andExpect(jsonPath("$.items[0].location").value("Durham, NC"))
+				.andExpect(jsonPath("$.pagination.totalItems").value(1));
+
+		mockMvc.perform(get("/api/reports/departments")
+						.param("location", "NC")
+						.param("sort", "name,asc"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.items.length()").value(1))
+				.andExpect(jsonPath("$.items[0].name").value("Product"))
+				.andExpect(jsonPath("$.items[0].location").value("Durham, NC"))
+				.andExpect(jsonPath("$.pagination.totalItems").value(1));
 	}
 
 	private void deleteExistingData() {

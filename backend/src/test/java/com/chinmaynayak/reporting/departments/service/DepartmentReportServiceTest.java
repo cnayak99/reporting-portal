@@ -85,9 +85,9 @@ class DepartmentReportServiceTest {
 	}
 
 	@Test
-	void filtersByExactLocationCaseInsensitively() {
+	void filtersByLocationTextCaseInsensitively() {
 		PagedResponse<DepartmentReportRow> response = departmentReportService.getDepartmentsReport(
-				query(null, null, null, null, "toronto"));
+				query(null, null, null, null, "onto"));
 
 		assertThat(response.items()).containsExactly(
 				new DepartmentReportRow(104L, "Data Analytics", null, 1L, "Toronto"),
@@ -98,7 +98,7 @@ class DepartmentReportServiceTest {
 	@Test
 	void combinesNameAndLocationFilters() {
 		PagedResponse<DepartmentReportRow> response = departmentReportService.getDepartmentsReport(
-				query(null, null, null, "data", "TORONTO"));
+				query(null, null, null, "data", "ONTO"));
 
 		assertThat(response.items()).containsExactly(
 				new DepartmentReportRow(104L, "Data Analytics", null, 1L, "Toronto"));

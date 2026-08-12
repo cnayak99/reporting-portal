@@ -47,7 +47,7 @@ public class DepartmentReportController {
 			@RequestParam(required = false) String sort,
 			@Parameter(description = "Case-insensitive search over department name.", example = "engineering")
 			@RequestParam(required = false) String q,
-			@Parameter(description = "Case-insensitive exact location filter.", example = "San Francisco, CA")
+			@Parameter(description = "Case-insensitive search over location text, such as city or state.", example = "Durham")
 			@RequestParam(required = false) String location) {
 
 		DepartmentReportQuery query = new DepartmentReportQuery(page, size, sort, q, location);
