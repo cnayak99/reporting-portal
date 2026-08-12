@@ -222,9 +222,10 @@ export function ProjectReportPage() {
           className="report-controls"
           onSubmit={(event) => event.preventDefault()}
         >
-          <label className="field-control search-control">
-            <span>Search projects</span>
+          <div className="field-control search-control">
+            <label htmlFor="projects-search">Search projects</label>
             <input
+              id="projects-search"
               type="search"
               value={query}
               onChange={(event) =>
@@ -232,11 +233,12 @@ export function ProjectReportPage() {
               }
               placeholder="Project name"
             />
-          </label>
+          </div>
 
-          <label className="field-control">
-            <span>Status</span>
+          <div className="field-control">
+            <label htmlFor="projects-status">Status</label>
             <select
+              id="projects-status"
               value={status ?? ""}
               onChange={(event) =>
                 updateParams({
@@ -251,11 +253,12 @@ export function ProjectReportPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="field-control">
-            <span>Department</span>
+          <div className="field-control">
+            <label htmlFor="projects-department">Department</label>
             <select
+              id="projects-department"
               value={departmentId ?? ""}
               disabled={departmentOptions.status === "loading"}
               onChange={(event) =>
@@ -274,11 +277,12 @@ export function ProjectReportPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="field-control compact-control">
-            <span>Page size</span>
+          <div className="field-control compact-control">
+            <label htmlFor="projects-page-size">Page size</label>
             <select
+              id="projects-page-size"
               value={size}
               onChange={(event) =>
                 updateParams({ size: Number(event.target.value) })
@@ -290,7 +294,7 @@ export function ProjectReportPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
           {hasFilters ? (
             <button

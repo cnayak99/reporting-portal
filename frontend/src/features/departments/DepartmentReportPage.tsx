@@ -163,9 +163,10 @@ export function DepartmentReportPage() {
           className="report-controls"
           onSubmit={(event) => event.preventDefault()}
         >
-          <label className="field-control search-control">
-            <span>Search departments</span>
+          <div className="field-control search-control">
+            <label htmlFor="departments-search">Search departments</label>
             <input
+              id="departments-search"
               type="search"
               value={query}
               onChange={(event) =>
@@ -173,11 +174,12 @@ export function DepartmentReportPage() {
               }
               placeholder="Department name"
             />
-          </label>
+          </div>
 
-          <label className="field-control search-control">
-            <span>Location</span>
+          <div className="field-control search-control">
+            <label htmlFor="departments-location">Location</label>
             <input
+              id="departments-location"
               type="search"
               value={location}
               onChange={(event) =>
@@ -187,11 +189,12 @@ export function DepartmentReportPage() {
               }
               placeholder="City, state, or region"
             />
-          </label>
+          </div>
 
-          <label className="field-control compact-control">
-            <span>Page size</span>
+          <div className="field-control compact-control">
+            <label htmlFor="departments-page-size">Page size</label>
             <select
+              id="departments-page-size"
               value={size}
               onChange={(event) =>
                 updateParams({ size: Number(event.target.value) })
@@ -203,7 +206,7 @@ export function DepartmentReportPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
           {hasFilters ? (
             <button

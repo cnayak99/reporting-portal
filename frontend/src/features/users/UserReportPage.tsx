@@ -177,9 +177,10 @@ export function UserReportPage() {
         </div>
 
         <form className="report-controls" onSubmit={(event) => event.preventDefault()}>
-          <label className="field-control search-control">
-            <span>Search users</span>
+          <div className="field-control search-control">
+            <label htmlFor="users-search">Search users</label>
             <input
+              id="users-search"
               type="search"
               value={query}
               onChange={(event) =>
@@ -187,11 +188,12 @@ export function UserReportPage() {
               }
               placeholder="Name or email"
             />
-          </label>
+          </div>
 
-          <label className="field-control">
-            <span>Role</span>
+          <div className="field-control">
+            <label htmlFor="users-role">Role</label>
             <select
+              id="users-role"
               value={role ?? ""}
               onChange={(event) =>
                 updateParams({
@@ -206,11 +208,12 @@ export function UserReportPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="field-control">
-            <span>Status</span>
+          <div className="field-control">
+            <label htmlFor="users-status">Status</label>
             <select
+              id="users-status"
               value={status ?? ""}
               onChange={(event) =>
                 updateParams({
@@ -225,11 +228,12 @@ export function UserReportPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="field-control compact-control">
-            <span>Page size</span>
+          <div className="field-control compact-control">
+            <label htmlFor="users-page-size">Page size</label>
             <select
+              id="users-page-size"
               value={size}
               onChange={(event) =>
                 updateParams({ size: Number(event.target.value) })
@@ -241,7 +245,7 @@ export function UserReportPage() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
           {hasFilters ? (
             <button className="button button-secondary" type="button" onClick={clearFilters}>

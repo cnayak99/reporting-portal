@@ -84,10 +84,11 @@ export function CatalogPage() {
             <h2 id="catalog-title">Available reports</h2>
           </div>
 
-          <label className="search-field">
+          <label className="search-field" htmlFor="report-search">
             <Search size={18} aria-hidden="true" />
             <span className="sr-only">Search reports by name</span>
             <input
+              id="report-search"
               type="search"
               placeholder="Search reports"
               value={query}
