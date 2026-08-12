@@ -11,6 +11,7 @@ import { AppShell } from "./AppShell";
 import type {
   DepartmentReportRow,
   PagedResponse,
+  ProjectReportRow,
   ReportMetadata,
   UserReportRow
 } from "../api/types";
@@ -434,6 +435,170 @@ describe("AppShell", () => {
       await screen.findByRole("heading", { name: "Available reports" })
     ).toBeInTheDocument();
   });
+
+  it("renders projects report rows from the backend", async () => {
+    const fetchMock = mockProjectsResponse(projectsPage());
+    renderApp(["/reports/projects"]);
+
+    expect(await screen.findByText("Reporting Portal")).toBeInTheDocument();
+    expect(screen.getAllByText("Engineering").length).toBeGreaterThan(0);
+    expect(screen.getByText("Avery Chen")).toBeInTheDocument();
+    expect(screen.getByText("2 total results")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 0, "sort")
+    ).toBe("name,asc");
+  });
+
+  it("renders null project end dates as ongoing", async () => {
+    mockProjectsResponse(projectsPage());
+    renderApp(["/reports/projects"]);
+
+    expect(await screen.findByText("Ongoing")).toBeInTheDocument();
+  });
+
+  it("sends q and resets projects to page zero when searching", async () => {
+    const fetchMock = mockProjectsResponse(projectsPage());
+    renderApp(["/reports/projects?page=2"]);
+    await screen.findByText("Reporting Portal");
+
+    fireEvent.change(screen.getByLabelText("Search projects"), {
+      target: { value: " portal " }
+    });
+
+    await waitFor(() =>
+      expect(countFetchesForPath(fetchMock, "/api/reports/projects")).toBe(2)
+    );
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 1, "q")
+    ).toBe("portal");
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 1, "page")
+    ).toBe("0");
+  });
+
+  it("sends the selected project status filter", async () => {
+    const fetchMock = mockProjectsResponse(projectsPage());
+    renderApp(["/reports/projects?page=1"]);
+    await screen.findByText("Reporting Portal");
+
+    fireEvent.change(screen.getByLabelText("Status"), {
+      target: { value: "ACTIVE" }
+    });
+
+    await waitFor(() =>
+      expect(countFetchesForPath(fetchMock, "/api/reports/projects")).toBe(2)
+    );
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 1, "status")
+    ).toBe("ACTIVE");
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 1, "page")
+    ).toBe("0");
+  });
+
+  it("uses department names as filter options and sends department IDs", async () => {
+    const fetchMock = mockProjectsResponse(projectsPage());
+    renderApp(["/reports/projects?page=3"]);
+    await screen.findByText("Reporting Portal");
+    await screen.findByRole("option", { name: "Engineering" });
+
+    fireEvent.change(screen.getByLabelText("Department"), {
+      target: { value: "201" }
+    });
+
+    await waitFor(() =>
+      expect(countFetchesForPath(fetchMock, "/api/reports/projects")).toBe(2)
+    );
+    expect(
+      getFetchSearchParamForPath(
+        fetchMock,
+        "/api/reports/projects",
+        1,
+        "departmentId"
+      )
+    ).toBe("201");
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 1, "page")
+    ).toBe("0");
+  });
+
+  it("uses backend pagination metadata for projects", async () => {
+    const fetchMock = mockProjectsResponse(
+      projectsPage(sampleProjects, {
+        page: 0,
+        size: 25,
+        totalItems: 35,
+        totalPages: 2,
+        hasNext: true,
+        hasPrevious: false
+      })
+    );
+    renderApp(["/reports/projects"]);
+    await screen.findByText("Reporting Portal");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    await waitFor(() =>
+      expect(countFetchesForPath(fetchMock, "/api/reports/projects")).toBe(2)
+    );
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 1, "page")
+    ).toBe("1");
+  });
+
+  it("exposes only backend-supported project sorting", async () => {
+    const fetchMock = mockProjectsResponse(projectsPage());
+    renderApp(["/reports/projects?sort=department,desc"]);
+    await screen.findByText("Reporting Portal");
+
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 0, "sort")
+    ).toBe("name,asc");
+    expect(
+      screen.getByRole("columnheader", { name: /Project Name/ })
+    ).toHaveAttribute("aria-sort", "ascending");
+    expect(
+      screen.queryByRole("button", { name: /Department/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Owner/ })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /End Date/ }));
+
+    await waitFor(() =>
+      expect(countFetchesForPath(fetchMock, "/api/reports/projects")).toBe(2)
+    );
+    expect(
+      getFetchSearchParamForPath(fetchMock, "/api/reports/projects", 1, "sort")
+    ).toBe("endDate,asc");
+  });
+
+  it("shows a projects loading state", () => {
+    mockProjectsPending();
+    renderApp(["/reports/projects"]);
+
+    expect(screen.getByText("Loading projects")).toBeInTheDocument();
+  });
+
+  it("shows a projects error state", async () => {
+    mockProjectsFailure("Projects report unavailable.");
+    renderApp(["/reports/projects"]);
+
+    expect(
+      await screen.findByText("Projects report unavailable.")
+    ).toBeInTheDocument();
+  });
+
+  it("shows a projects empty state", async () => {
+    mockProjectsResponse(projectsPage([]));
+    renderApp(["/reports/projects"]);
+
+    expect(
+      await screen.findByText("No projects match this report view.")
+    ).toBeInTheDocument();
+  });
 });
 
 const sampleUsers: UserReportRow[] = [
@@ -469,6 +634,27 @@ const sampleDepartments: DepartmentReportRow[] = [
     manager: null,
     employeeCount: 0,
     location: "Remote"
+  }
+];
+
+const sampleProjects: ProjectReportRow[] = [
+  {
+    id: 3001,
+    name: "Reporting Portal",
+    department: "Engineering",
+    owner: "Avery Chen",
+    status: "ACTIVE",
+    startDate: "2026-07-20",
+    endDate: null
+  },
+  {
+    id: 3002,
+    name: "Portfolio Planning",
+    department: "Operations",
+    owner: "Blair Stone",
+    status: "COMPLETED",
+    startDate: "2026-01-15",
+    endDate: "2026-06-30"
   }
 ];
 
@@ -508,6 +694,50 @@ function mockDepartmentsResponse(page: PagedResponse<DepartmentReportRow>) {
   return fetchMock;
 }
 
+function mockProjectsResponse(
+  page: PagedResponse<ProjectReportRow>,
+  departmentOptions: PagedResponse<DepartmentReportRow> = departmentsPage()
+) {
+  const fetchMock = vi.fn((input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.startsWith("/api/reports/departments")) {
+      return Promise.resolve(jsonResponse(departmentOptions));
+    }
+
+    return Promise.resolve(jsonResponse(page));
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+function mockProjectsPending() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/reports/departments")) {
+        return Promise.resolve(jsonResponse(departmentsPage()));
+      }
+
+      return new Promise<Response>(() => undefined);
+    })
+  );
+}
+
+function mockProjectsFailure(detail: string) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("/api/reports/departments")) {
+        return Promise.resolve(jsonResponse(departmentsPage()));
+      }
+
+      return Promise.resolve(problemResponse(detail));
+    })
+  );
+}
+
 function usersPage(
   items: UserReportRow[] = sampleUsers,
   pagination = {
@@ -536,6 +766,20 @@ function departmentsPage(
   return { items, pagination };
 }
 
+function projectsPage(
+  items: ProjectReportRow[] = sampleProjects,
+  pagination = {
+    page: 0,
+    size: 25,
+    totalItems: items.length,
+    totalPages: items.length === 0 ? 0 : 1,
+    hasNext: false,
+    hasPrevious: false
+  }
+): PagedResponse<ProjectReportRow> {
+  return { items, pagination };
+}
+
 function getFetchSearchParam(
   fetchMock: ReturnType<typeof vi.fn>,
   callIndex: number,
@@ -543,6 +787,27 @@ function getFetchSearchParam(
 ) {
   const path = String(fetchMock.mock.calls[callIndex][0]);
   return new URL(path, "http://localhost").searchParams.get(parameter);
+}
+
+function getFetchSearchParamForPath(
+  fetchMock: ReturnType<typeof vi.fn>,
+  pathPrefix: string,
+  callIndex: number,
+  parameter: string
+) {
+  const matchingPath = fetchMock.mock.calls
+    .map(([input]) => String(input))
+    .filter((path) => path.startsWith(pathPrefix))[callIndex];
+  return new URL(matchingPath, "http://localhost").searchParams.get(parameter);
+}
+
+function countFetchesForPath(
+  fetchMock: ReturnType<typeof vi.fn>,
+  pathPrefix: string
+) {
+  return fetchMock.mock.calls
+    .map(([input]) => String(input))
+    .filter((path) => path.startsWith(pathPrefix)).length;
 }
 
 function jsonResponse(body: unknown) {

@@ -38,7 +38,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -48,7 +49,8 @@ a {
 
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 3px solid rgba(8, 117, 111, 0.28);
   outline-offset: 3px;
 }
@@ -337,6 +339,7 @@ p {
 }
 
 .inline-alert,
+.inline-note,
 .empty-panel,
 .loading-panel,
 .integration-card,
@@ -353,6 +356,15 @@ p {
   padding: 12px;
   color: var(--danger);
   background: var(--danger-soft);
+}
+
+.inline-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: var(--gold);
+  background: #fbf0d1;
 }
 
 .loading-panel,
@@ -543,9 +555,19 @@ p {
   background: #fbf0d1;
 }
 
+.status-info {
+  color: #4d5c9f;
+  background: #e9ecfb;
+}
+
 .status-muted {
   color: #58615b;
   background: #ebeee8;
+}
+
+.status-danger {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .pagination-bar {

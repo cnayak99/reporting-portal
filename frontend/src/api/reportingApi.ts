@@ -3,6 +3,7 @@ import type {
   DepartmentReportRow,
   PagedResponse,
   ProjectReportRow,
+  ProjectStatus,
   ReportMetadata,
   UserRole,
   UserReportRow,
@@ -21,6 +22,15 @@ export interface UsersReportParams {
 export interface DepartmentsReportParams {
   q?: string;
   location?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface ProjectsReportParams {
+  q?: string;
+  status?: ProjectStatus;
+  departmentId?: number;
   page?: number;
   size?: number;
   sort?: string;
@@ -50,10 +60,14 @@ export function getDepartmentsReport(
   );
 }
 
-export function getProjectsReport(signal?: AbortSignal) {
-  return requestJson<PagedResponse<ProjectReportRow>>("/api/reports/projects", {
-    signal
-  });
+export function getProjectsReport(
+  params: ProjectsReportParams = {},
+  signal?: AbortSignal
+) {
+  return requestJson<PagedResponse<ProjectReportRow>>(
+    withSearchParams("/api/reports/projects", params),
+    { signal }
+  );
 }
 
 function withSearchParams(
