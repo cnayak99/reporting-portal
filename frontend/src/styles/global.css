@@ -319,6 +319,23 @@ p {
   background: var(--teal);
 }
 
+.button-secondary {
+  color: var(--ink);
+  border-color: var(--line-strong);
+  background: var(--surface);
+}
+
+.button-secondary:hover:not(:disabled) {
+  border-color: var(--teal);
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .inline-alert,
 .empty-panel,
 .loading-panel,
@@ -353,6 +370,196 @@ p {
 
 .loading-panel svg {
   color: var(--teal);
+}
+
+.report-page-header,
+.report-workbench {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.report-page-header {
+  display: grid;
+  gap: 24px;
+  padding: 28px;
+  color: #f8fcf7;
+  background: #18211c;
+  box-shadow:
+    inset 6px 0 0 var(--teal),
+    var(--shadow);
+}
+
+.report-page-header p {
+  max-width: 680px;
+  margin-bottom: 0;
+  color: rgba(248, 252, 247, 0.8);
+}
+
+.report-workbench {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.result-count {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-weight: 760;
+}
+
+.report-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.field-control {
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.field-control input,
+.field-control select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.field-control input:focus,
+.field-control select:focus {
+  border-color: var(--teal);
+  outline: 3px solid rgba(8, 117, 111, 0.12);
+}
+
+.search-control {
+  flex: 1 1 260px;
+}
+
+.compact-control {
+  min-width: 130px;
+}
+
+.table-frame {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.report-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+}
+
+.report-table th,
+.report-table td {
+  min-height: 54px;
+  padding: 15px 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.report-table th {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 820;
+  background: #f8faf5;
+}
+
+.report-table tbody tr:hover {
+  background: #f8faf5;
+}
+
+.report-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.report-table a {
+  color: var(--teal);
+  font-weight: 740;
+  text-decoration: none;
+}
+
+.report-table a:hover,
+.report-table a:focus-visible {
+  text-decoration: underline;
+}
+
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font-weight: inherit;
+}
+
+.align-right,
+.align-right .table-sort-button {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 86px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.status-success {
+  color: #18713d;
+  background: #e2f3e8;
+}
+
+.status-warning {
+  color: var(--gold);
+  background: #fbf0d1;
+}
+
+.status-muted {
+  color: #58615b;
+  background: #ebeee8;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--ink-soft);
+  font-weight: 760;
+}
+
+.pagination-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .text-button {
@@ -480,6 +687,8 @@ p {
 
   .hero-panel,
   .catalog-panel,
+  .report-page-header,
+  .report-workbench,
   .report-placeholder,
   .state-panel {
     padding: 18px;
@@ -497,5 +706,17 @@ p {
   .integration-card {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .report-controls,
+  .pagination-bar,
+  .pagination-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .field-control,
+  .button {
+    width: 100%;
   }
 }

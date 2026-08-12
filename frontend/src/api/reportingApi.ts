@@ -4,17 +4,32 @@ import type {
   PagedResponse,
   ProjectReportRow,
   ReportMetadata,
-  UserReportRow
+  UserRole,
+  UserReportRow,
+  UserStatus
 } from "./types";
+
+export interface UsersReportParams {
+  q?: string;
+  role?: UserRole;
+  status?: UserStatus;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
 
 export function getReportCatalog(signal?: AbortSignal) {
   return requestJson<ReportMetadata[]>("/api/reports", { signal });
 }
 
-export function getUsersReport(signal?: AbortSignal) {
-  return requestJson<PagedResponse<UserReportRow>>("/api/reports/users", {
-    signal
-  });
+export function getUsersReport(
+  params: UsersReportParams = {},
+  signal?: AbortSignal
+) {
+  return requestJson<PagedResponse<UserReportRow>>(
+    withSearchParams("/api/reports/users", params),
+    { signal }
+  );
 }
 
 export function getDepartmentsReport(signal?: AbortSignal) {
@@ -30,3 +45,21 @@ export function getProjectsReport(signal?: AbortSignal) {
   });
 }
 
+function withSearchParams(
+  path: `/api${string}`,
+  params: object
+) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (
+      (typeof value === "string" || typeof value === "number") &&
+      value !== ""
+    ) {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const query = searchParams.toString();
+  return query ? (`${path}?${query}` as `/api${string}`) : path;
+}
