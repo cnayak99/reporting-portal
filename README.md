@@ -10,7 +10,6 @@ docker compose up --build
 
 Then open [http://localhost:3000](http://localhost:3000).
 
-The longer backend study and interview revision notes that used to live here are preserved at [docs/backend-study-guide.md](docs/backend-study-guide.md).
 
 ## Overview
 
